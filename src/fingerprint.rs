@@ -1,0 +1,381 @@
+use rand::seq::SliceRandom; // For random selection
+use rand::thread_rng;
+use serde::{Serialize, Deserialize};
+use crate::graphics::{Canvas, Gpu};
+use crate::metrics::Metrics;
+use std::time::{SystemTime, UNIX_EPOCH};
+
+const OPERAND: f64 = -1.0e300;
+
+#[derive(Debug, Clone)]
+struct Resolution(i32, i32);
+
+impl Resolution {
+    fn new() -> Resolution {
+        let RESOLUTIONS: [Resolution; 8] = [
+            Resolution(1280, 720),  // 720p
+            Resolution(1366, 768),  // HD
+            Resolution(1920, 1080), // Full HD
+            Resolution(1600, 900),  // HD+
+            Resolution(1440, 900),  // 16:10
+            Resolution(1024, 768),  // XGA
+            Resolution(800, 600),   // SVGA
+            Resolution(1280, 800),  // WXGA
+        ];
+        let mut rng = thread_rng();
+        RESOLUTIONS.choose(&mut rng).unwrap().clone()
+    }
+
+    fn construct_screeninfo_string(&self) -> String {
+        format!("{}-{}-{}-24-*-*-*", self.0, self.1, self.1 - 40)
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct Plugin {
+    name: String,
+    #[serde(rename = "str")]
+    str_: String,
+}
+
+impl Plugin {
+    fn generate_plugin_string(plugins: &Vec<Plugin>) -> String {
+        let plugin_strings: Vec<String> = plugins
+            .iter()
+            .map(|plugin| plugin.str_.clone())
+            .collect();
+        plugin_strings.join("")
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct Capabilities {
+    css: CssCapabilities,
+    js: JsCapabilities,
+    elapsed: u64,
+}
+
+impl Capabilities {
+    fn new() -> Capabilities {
+        Capabilities {
+            css: CssCapabilities::new(),
+            js: JsCapabilities::new(),
+            elapsed: 0,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct CssCapabilities {
+    #[serde(rename = "textShadow")]
+    text_shadow: u8,
+    #[serde(rename = "WebkitTextStroke")]
+    webkit_text_stroke: u8,
+    #[serde(rename = "boxShadow")]
+    box_shadow: u8,
+    #[serde(rename = "borderRadius")]
+    border_radius: u8,
+    #[serde(rename = "borderImage")]
+    border_image: u8,
+    opacity: u8,
+    transform: u8,
+    transition: u8,
+}
+
+impl CssCapabilities {
+    fn new() -> CssCapabilities {
+        CssCapabilities {
+            text_shadow: 1,
+            webkit_text_stroke: 1,
+            box_shadow: 1,
+            border_radius: 1,
+            border_image: 1,
+            opacity: 1,
+            transform: 1,
+            transition: 1,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct JsCapabilities {
+    audio: bool,
+    geolocation: bool,
+    #[serde(rename = "localStorage")]
+    local_storage: String,
+    touch: bool,
+    video: bool,
+    #[serde(rename = "webWorker")]
+    web_worker: bool,
+}
+
+impl JsCapabilities {
+    fn new() -> JsCapabilities {
+        JsCapabilities {
+            audio: true,
+            geolocation: true,
+            local_storage: String::from("supported"),
+            touch: false,
+            video: true,
+            web_worker: true,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Payload {
+    metrics: Metrics,
+    start: u64,
+    #[serde(rename = "flashVersion")]
+    flash_version: Option<String>,
+    plugins: Vec<Plugin>,
+    #[serde(rename = "dupedPlugins")]
+    duped_plugins: String,
+    #[serde(rename = "screenInfo")]
+    screen_info: String,
+    referrer: String,
+    #[serde(rename = "userAgent")]
+    user_agent: String,
+    location: String,
+    #[serde(rename = "webDriver")]
+    web_driver: bool,
+    capabilities: Capabilities,
+    gpu: Gpu,
+    dnt: Option<u8>,
+    math: Math,
+    automation: Automation,
+    stealth: Stealth,
+    crypto: Crypto,
+    canvas: Canvas,
+    #[serde(rename = "formDetected")]
+    form_detected: bool,
+    #[serde(rename = "numForms")]
+    num_forms: u32,
+    #[serde(rename = "numFormElements")]
+    num_form_elements: u32,
+    be: Be,
+    end: u64,
+    errors: Vec<String>,
+    version: String,
+    id: String,
+}
+
+impl Payload {
+    pub fn new(referrer: String, user_agent: String, location: String) -> Payload {
+        let math = Math::new();
+        let plugins: Vec<Plugin> = vec![
+            Plugin {
+                name: String::from("PDF Viewer"),
+                str_: String::from("PDF Viewer "),
+            },
+            Plugin {
+                name: String::from("Chrome PDF Viewer"),
+                str_: String::from("Chrome PDF Viewer "),
+            },
+            Plugin {
+                name: String::from("Chromium PDF Viewer"),
+                str_: String::from("Chromium PDF Viewer "),
+            },
+            Plugin {
+                name: String::from("Microsoft Edge PDF Viewer"),
+                str_: String::from("Microsoft Edge PDF Viewer "),
+            },
+            Plugin {
+                name: String::from("WebKit built-in PDF"),
+                str_: String::from("WebKit built-in PDF "),
+            },
+        ];
+        let capabilities = Capabilities::new();
+        let automation = Automation::new();
+        let crypto = Crypto::new();
+        let flash_version = None;
+        let stealth = Stealth::new();
+        let be = Be { si: false };
+        let resolution = Resolution::new();
+        let screen_info = resolution.construct_screeninfo_string();
+        let duped_plugins = Plugin::generate_plugin_string(&plugins) + "||" + &screen_info;
+        let canvas = Canvas::new();
+        let gpu = Gpu::new();
+        let start = (SystemTime::now().duration_since(UNIX_EPOCH)
+            .expect("Time went backwards").as_millis()) as u64;
+        Payload {
+            metrics: Metrics::new(),
+            start,
+            flash_version,
+            plugins,
+            duped_plugins,
+            screen_info,
+            referrer,
+            user_agent,
+            location,
+            web_driver: false,
+            capabilities,
+            gpu,
+            dnt: None,
+            math,
+            automation,
+            stealth,
+            crypto,
+            canvas,
+            form_detected: false,
+            num_forms: 0,
+            num_form_elements: 0,
+            be,
+            end: (start + 1),
+            errors: vec![],
+            version: String::from("2.3.0"),
+            id: format!("{}", uuid::Uuid::new_v4()),
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct Math {
+    tan: String,
+    sin: String,
+    cos: String,
+}
+
+impl Math {
+    fn new() -> Math {
+        Math {
+            tan: f64::tan(OPERAND).to_string(),
+            sin: f64::sin(OPERAND).to_string(),
+            cos: f64::cos(OPERAND).to_string(),
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct Automation {
+    wd: WebDriver,
+    phantom: Phantom,
+}
+
+impl Automation {
+    fn new() -> Automation {
+        Automation {
+            wd: WebDriver::new(),
+            phantom: Phantom::new(),
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct WebDriver {
+    properties: Properties,
+}
+
+impl WebDriver {
+    fn new() -> WebDriver {
+        WebDriver {
+            properties: Properties {
+                document: Some(vec![]),
+                window: vec![],
+                navigator: Some(vec![]),
+            },
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct Phantom {
+    properties: Properties,
+}
+
+impl Phantom {
+    fn new() -> Phantom {
+        Phantom {
+            properties: Properties {
+                document: None,
+                window: vec![],
+                navigator: None,
+            },
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct Properties {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    document: Option<Vec<String>>,
+    window: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    navigator: Option<Vec<String>>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct Stealth {
+    t1: u8,
+    t2: u8,
+    i: u8,
+    mte: u8,
+    mtd: bool,
+}
+
+impl Stealth {
+    fn new() -> Stealth {
+        Stealth {
+            t1: 0,
+            t2: 0,
+            i: 0,
+            mte: 0,
+            mtd: false,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct Crypto {
+    crypto: u8,
+    subtle: u8,
+    encrypt: bool,
+    decrypt: bool,
+    wrap_key: bool,
+    unwrap_key: bool,
+    sign: bool,
+    verify: bool,
+    digest: bool,
+    derive_bits: bool,
+    derive_key: bool,
+    get_random_values: bool,
+    random_uuid: bool,
+}
+
+impl Crypto {
+    fn new() -> Crypto {
+        Crypto {
+            crypto: 1,
+            subtle: 1,
+            encrypt: true,
+            decrypt: true,
+            wrap_key: true,
+            unwrap_key: true,
+            sign: true,
+            verify: true,
+            digest: true,
+            derive_bits: true,
+            derive_key: true,
+            get_random_values: true,
+            random_uuid: true,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct Be {
+    si: bool,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Payload;
+    #[test]
+    fn test_payload() {
+        let result = Payload::new(String::from("https://huggingface.co/login"), 
+        String::from("Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:131.0) Gecko/20100101 Firefox/131.0"),
+        String::from("https://huggingface.co/login") );
+        let serialized = serde_json::to_string(&result).unwrap();
+        println!("{serialized:#}");
+    }
+}
