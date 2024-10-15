@@ -4,7 +4,7 @@ use serde::{Serialize, Deserialize};
 use crate::graphics::{Canvas, Gpu};
 use crate::metrics::Metrics;
 use std::time::{SystemTime, UNIX_EPOCH};
-
+use uuid::Uuid;
 const OPERAND: f64 = -1.0e300;
 
 #[derive(Debug, Clone)]
@@ -12,18 +12,14 @@ struct Resolution(i32, i32);
 
 impl Resolution {
     fn new() -> Resolution {
-        let RESOLUTIONS: [Resolution; 8] = [
-            Resolution(1280, 720),  // 720p
+        let resolutions: [Resolution; 4] = [
             Resolution(1366, 768),  // HD
             Resolution(1920, 1080), // Full HD
             Resolution(1600, 900),  // HD+
             Resolution(1440, 900),  // 16:10
-            Resolution(1024, 768),  // XGA
-            Resolution(800, 600),   // SVGA
-            Resolution(1280, 800),  // WXGA
         ];
         let mut rng = thread_rng();
-        RESOLUTIONS.choose(&mut rng).unwrap().clone()
+        resolutions.choose(&mut rng).unwrap().clone()
     }
 
     fn construct_screeninfo_string(&self) -> String {
@@ -224,7 +220,7 @@ impl Payload {
             end: (start + 1),
             errors: vec![],
             version: String::from("2.3.0"),
-            id: format!("{}", uuid::Uuid::new_v4()),
+            id: format!("{}",Uuid::new_v4()),
         }
     }
 }
