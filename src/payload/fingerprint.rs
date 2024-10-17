@@ -1,10 +1,11 @@
 use rand::seq::SliceRandom; // For random selection
 use rand::thread_rng;
 use serde::{Serialize, Deserialize};
-use crate::graphics::{Canvas, Gpu};
-use crate::metrics::Metrics;
+use crate::payload::graphics::{Canvas,Gpu};
+use crate::payload::metrics::Metrics;
 use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
+
 const OPERAND: f64 = -1.0e300;
 
 #[derive(Debug, Clone)]
@@ -119,7 +120,7 @@ impl JsCapabilities {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Payload {
+pub struct Fingerprint {
     metrics: Metrics,
     start: u64,
     #[serde(rename = "flashVersion")]
@@ -140,7 +141,6 @@ pub struct Payload {
     dnt: Option<u8>,
     math: Math,
     automation: Automation,
-    stealth: Stealth,
     crypto: Crypto,
     canvas: Canvas,
     #[serde(rename = "formDetected")]
@@ -156,8 +156,8 @@ pub struct Payload {
     id: String,
 }
 
-impl Payload {
-    pub fn new(referrer: String, user_agent: String, location: String) -> Payload {
+impl Fingerprint {
+    pub fn new(referrer: String, user_agent: String, location: String) -> Fingerprint {
         let math = Math::new();
         let plugins: Vec<Plugin> = vec![
             Plugin {
@@ -185,7 +185,6 @@ impl Payload {
         let automation = Automation::new();
         let crypto = Crypto::new();
         let flash_version = None;
-        let stealth = Stealth::new();
         let be = Be { si: false };
         let resolution = Resolution::new();
         let screen_info = resolution.construct_screeninfo_string();
@@ -194,7 +193,7 @@ impl Payload {
         let gpu = Gpu::new();
         let start = (SystemTime::now().duration_since(UNIX_EPOCH)
             .expect("Time went backwards").as_millis()) as u64;
-        Payload {
+        Fingerprint {
             metrics: Metrics::new(),
             start,
             flash_version,
@@ -210,7 +209,6 @@ impl Payload {
             dnt: None,
             math,
             automation,
-            stealth,
             crypto,
             canvas,
             form_detected: false,
@@ -235,9 +233,9 @@ struct Math {
 impl Math {
     fn new() -> Math {
         Math {
-            tan: f64::tan(OPERAND).to_string(),
-            sin: f64::sin(OPERAND).to_string(),
-            cos: f64::cos(OPERAND).to_string(),
+            tan: String::from("-1.4214488238747245"),
+            sin: String::from("0.8178819121159085"),
+            cos: String::from("-0.5753861119575491")
         }
     }
 }
@@ -300,26 +298,7 @@ struct Properties {
     navigator: Option<Vec<String>>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-struct Stealth {
-    t1: u8,
-    t2: u8,
-    i: u8,
-    mte: u8,
-    mtd: bool,
-}
 
-impl Stealth {
-    fn new() -> Stealth {
-        Stealth {
-            t1: 0,
-            t2: 0,
-            i: 0,
-            mte: 0,
-            mtd: false,
-        }
-    }
-}
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Crypto {
@@ -365,13 +344,18 @@ struct Be {
 
 #[cfg(test)]
 mod tests {
-    use super::Payload;
+    use super::Fingerprint;
+    use std::time::Instant;
     #[test]
     fn test_payload() {
-        let result = Payload::new(String::from("https://huggingface.co/login"), 
+        let start = Instant::now();
+        let result = Fingerprint::new(String::from("https://huggingface.co/login"), 
         String::from("Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:131.0) Gecko/20100101 Firefox/131.0"),
         String::from("https://huggingface.co/login") );
         let serialized = serde_json::to_string(&result).unwrap();
+        println!("Time : {:?}",start.elapsed());
         println!("{serialized:#}");
+
+        // println!("{}",result.canvas.histogram_bins.len())
     }
 }
