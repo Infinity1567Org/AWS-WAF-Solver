@@ -1,5 +1,4 @@
-use tl::{Node, NodeHandle, Parser};
-
+use tl::{Node, Parser};
 pub fn get_form_data(html_body: &str) -> (usize, usize) {
     // let mut forms: Vec<tl::Node> = vec![];
     let dom = tl::parse(html_body, tl::ParserOptions::default()).unwrap();
@@ -14,7 +13,7 @@ pub fn get_form_data(html_body: &str) -> (usize, usize) {
         let count = node_iter.by_ref().count();
         return (form_elements, count);
     }
-    (0, 0)
+    (5, 5)
 }
 
 pub fn get_form_elements_count(form_node: &Node, parser: &Parser) -> usize {
@@ -77,12 +76,23 @@ mod tests {
         // }
     }
 
-
+    #[tokio::test]
     async fn test_webpage() {
-        let client = rquest::Client::builder().impersonate(Impersonate::Chrome129).build()?;
-
-        let html = client.get("https://sportsbook.caesars.com/us/nj/bet/registration?bc=CZR1000&utm_urlreferrer=https%3A%2F%2Fwww.caesars.com%2Fsportsbook-and-casino%2Fnj%2F").send().await?;
-        let (num_form_elements,num_forms) = get_form_data(html.text());
+        let client = rquest::Client::builder()
+        .impersonate(Impersonate::Chrome129)
+        .build();
+        client.as_ref().expect("Error").get("https://www.caesars.com/sportsbook-and-casino/nj/").send().await.expect("error");
+        let html = client.expect("Error").get("https://sportsbook.caesars.com/us/nj/bet/registration?bc=CZR1000&utm_urlreferrer=https%3A%2F%2Fwww.caesars.com%2Fsportsbook-and-casino%2Fnj%2F").send().await.expect("error");
+        let status = html.status().as_u16();
+        if status!=200 {
+            panic!("Status code was not 200. Status: {}",status);
+        }
+        let html_body = html.text().await.expect("error");
+        println!("{}",html_body);
+        let (num_form_elements,num_forms) = get_form_data(&html_body);
+        assert_eq!(num_forms,1);
+        // assert_eq!(num_form_elements,3);
+        
         // assert_eq!()
     }
 }
