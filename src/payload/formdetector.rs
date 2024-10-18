@@ -23,9 +23,9 @@ pub fn get_form_elements_count(form_node: &Node, parser: &Parser) -> usize {
         .children()
         .all(parser)
         .iter()
-        .filter(|child| {   
-            if let Some(tag) =(**child).as_tag() {
-                return tag.name() == "input".as_bytes() || tag.name() == "button".as_bytes()
+        .filter(|child| {
+            if let Some(tag) = (**child).as_tag() {
+                return tag.name() == "input".as_bytes() || tag.name() == "button".as_bytes();
             }
             return false;
         })
@@ -34,8 +34,8 @@ pub fn get_form_elements_count(form_node: &Node, parser: &Parser) -> usize {
 #[cfg(test)]
 mod tests {
     use super::get_form_data;
-    use std::time::Instant;
     use rquest::tls::Impersonate;
+    use std::time::Instant;
     #[test]
     fn test_local_html() {
         let start = Instant::now();
@@ -70,7 +70,7 @@ mod tests {
         let (forms, count) = get_form_data(html_body);
         println!("Time : {:?}", start.elapsed());
         assert_eq!(count, 2);
-        assert_eq!(forms,4);
+        assert_eq!(forms, 4);
         // let dom = tl::parse(html_body, tl::ParserOptions::default()).unwrap();
         // let parser = dom.parser();
         // let form_children = forms[0].children().unwrap();
@@ -85,18 +85,23 @@ mod tests {
     #[tokio::test]
     async fn test_webpage() {
         let client = rquest::Client::builder()
-        .impersonate(Impersonate::Chrome129)
-        .build();
-        let html = client.expect("Error").get("https://huggingface.co/login").send().await.expect("error");
+            .impersonate(Impersonate::Chrome129)
+            .build();
+        let html = client
+            .expect("Error")
+            .get("https://huggingface.co/login")
+            .send()
+            .await
+            .expect("error");
         let status = html.status().as_u16();
-        if status!=200 {
-            panic!("Status code was not 200. Status: {}",status);
+        if status != 200 {
+            panic!("Status code was not 200. Status: {}", status);
         }
         let html_body = html.text().await.expect("error");
-        let (num_form_elements,num_forms) = get_form_data(&html_body);
-        assert_eq!(num_forms,1);
-        assert_eq!(num_form_elements,3);
-        
+        let (num_form_elements, num_forms) = get_form_data(&html_body);
+        assert_eq!(num_forms, 1);
+        assert_eq!(num_form_elements, 3);
+
         // assert_eq!()
     }
 }
