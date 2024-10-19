@@ -1,8 +1,8 @@
+use crate::payload::graphics::{Canvas, Gpu};
+use crate::payload::metrics::Metrics;
 use rand::seq::SliceRandom; // For random selection
 use rand::thread_rng;
-use serde::{Serialize, Deserialize};
-use crate::payload::graphics::{Canvas,Gpu};
-use crate::payload::metrics::Metrics;
+use serde::Serialize;
 use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
 
@@ -28,7 +28,7 @@ impl Resolution {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize)]
 struct Plugin {
     name: String,
     #[serde(rename = "str")]
@@ -37,15 +37,13 @@ struct Plugin {
 
 impl Plugin {
     fn generate_plugin_string(plugins: &Vec<Plugin>) -> String {
-        let plugin_strings: Vec<String> = plugins
-            .iter()
-            .map(|plugin| plugin.str_.clone())
-            .collect();
+        let plugin_strings: Vec<String> =
+            plugins.iter().map(|plugin| plugin.str_.clone()).collect();
         plugin_strings.join("")
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize)]
 struct Capabilities {
     css: CssCapabilities,
     js: JsCapabilities,
@@ -62,7 +60,7 @@ impl Capabilities {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize)]
 struct CssCapabilities {
     #[serde(rename = "textShadow")]
     text_shadow: u8,
@@ -94,7 +92,7 @@ impl CssCapabilities {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize)]
 struct JsCapabilities {
     audio: bool,
     geolocation: bool,
@@ -119,7 +117,7 @@ impl JsCapabilities {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize)]
 pub struct Fingerprint {
     metrics: Metrics,
     start: u64,
@@ -191,8 +189,10 @@ impl Fingerprint {
         let duped_plugins = Plugin::generate_plugin_string(&plugins) + "||" + &screen_info;
         let canvas = Canvas::new();
         let gpu = Gpu::new();
-        let start = (SystemTime::now().duration_since(UNIX_EPOCH)
-            .expect("Time went backwards").as_millis()) as u64;
+        let start = (SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("Time went backwards")
+            .as_millis()) as u64;
         Fingerprint {
             metrics: Metrics::new(),
             start,
@@ -218,12 +218,12 @@ impl Fingerprint {
             end: (start + 1),
             errors: vec![],
             version: String::from("2.3.0"),
-            id: format!("{}",Uuid::new_v4()),
+            id: format!("{}", Uuid::new_v4()),
         }
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize)]
 struct Math {
     tan: String,
     sin: String,
@@ -235,12 +235,12 @@ impl Math {
         Math {
             tan: String::from("-1.4214488238747245"),
             sin: String::from("0.8178819121159085"),
-            cos: String::from("-0.5753861119575491")
+            cos: String::from("-0.5753861119575491"),
         }
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize)]
 struct Automation {
     wd: WebDriver,
     phantom: Phantom,
@@ -255,7 +255,7 @@ impl Automation {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize)]
 struct WebDriver {
     properties: Properties,
 }
@@ -272,7 +272,7 @@ impl WebDriver {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize)]
 struct Phantom {
     properties: Properties,
 }
@@ -289,7 +289,7 @@ impl Phantom {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize)]
 struct Properties {
     #[serde(skip_serializing_if = "Option::is_none")]
     document: Option<Vec<String>>,
@@ -298,9 +298,7 @@ struct Properties {
     navigator: Option<Vec<String>>,
 }
 
-
-
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize)]
 struct Crypto {
     crypto: u8,
     subtle: u8,
@@ -337,7 +335,7 @@ impl Crypto {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize)]
 struct Be {
     si: bool,
 }
@@ -349,11 +347,15 @@ mod tests {
     #[test]
     fn test_payload() {
         let start = Instant::now();
-        let result = Fingerprint::new(String::from("https://huggingface.co/login"), 
-        String::from("Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:131.0) Gecko/20100101 Firefox/131.0"),
-        String::from("https://huggingface.co/login") );
+        let result = Fingerprint::new(
+            String::from("https://huggingface.co/login"),
+            String::from(
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:131.0) Gecko/20100101 Firefox/131.0",
+            ),
+            String::from("https://huggingface.co/login"),
+        );
         let serialized = serde_json::to_string(&result).unwrap();
-        println!("Time : {:?}",start.elapsed());
+        println!("Time : {:?}", start.elapsed());
         println!("{serialized:#}");
 
         // println!("{}",result.canvas.histogram_bins.len())

@@ -1,15 +1,14 @@
-
 use rand::Rng; // For generating random numbers
-use serde::{Serialize, Deserialize};
+use serde::Serialize;
 use struct_iterable::Iterable;
 
-#[derive(Debug, Clone,Deserialize,Serialize)]
+#[derive(Debug, Clone, Serialize)]
 #[serde(untagged)]
 pub enum MetricValue {
-    Int(usize),   // or you can use i32, usize, etc.
+    Int(usize), // or you can use i32, usize, etc.
     Float(f64),
 }
-#[derive(Debug, Serialize, Deserialize,Iterable)]
+#[derive(Debug, Serialize, Iterable)]
 pub struct Metrics {
     fp2: usize,
     browser: usize,
@@ -34,7 +33,7 @@ impl Metrics {
             fp2: 1,
             browser: 0,
             capabilities: 0,
-            gpu: rng.gen_range(13..=16), 
+            gpu: rng.gen_range(13..=16),
             dnt: 0,
             math: 0,
             screen: 0,
@@ -48,56 +47,95 @@ impl Metrics {
         }
     }
 }
-#[derive(Debug, Serialize, Deserialize)]
-pub struct MetricData
-{
-
-    name : String,
-    value : MetricValue,
-    unit : String
+#[derive(Debug, Serialize)]
+pub struct MetricData {
+    name: String,
+    value: MetricValue,
+    unit: String,
 }
 
-impl MetricData  {
-    pub fn metric_to_metric_data(collected_metrics : Metrics) -> Vec<MetricData> {
+impl MetricData {
+    pub fn metric_to_metric_data(collected_metrics: Metrics) -> Vec<MetricData> {
         let mut rng = rand::thread_rng();
-        let mut metrics : Vec<MetricData> = vec![];
-        metrics.push(MetricData { name: 2.to_string(), value: MetricValue::Float(rng.gen_range(0.25..0.41)), unit: 2.to_string() });
+        let mut metrics: Vec<MetricData> = vec![];
+        metrics.push(MetricData {
+            name: 2.to_string(),
+            value: MetricValue::Float(rng.gen_range(0.25..0.41)),
+            unit: 2.to_string(),
+        });
         let mut counter = 0;
         for (_, value) in collected_metrics.iter() {
             // println!("{:?}",value.downcast_ref());
-            metrics.push(MetricData { 
-            name: format!("{}",100+counter), 
-            value: MetricValue::Int(*value.downcast_ref::<usize>().expect("Error")) , 
-            unit: 2.to_string() 
+            metrics.push(MetricData {
+                name: format!("{}", 100 + counter),
+                value: MetricValue::Int(*value.downcast_ref::<usize>().expect("Error")),
+                unit: 2.to_string(),
             });
-            counter +=1;
+            counter += 1;
         }
 
-        metrics.push(MetricData { name: 3.to_string(), value: MetricValue::Float(rng.gen_range(1.0..10.0)), unit: 2.to_string() });
-        metrics.push(MetricData { name: 7.to_string(), value: MetricValue::Int(1), unit: 4.to_string() });
-        metrics.push(MetricData { name:1.to_string(), value: MetricValue::Float(rng.gen_range(16.0..23.0)), unit: 2.to_string() });
-        metrics.push(MetricData { name:4.to_string(), value: MetricValue::Float(rng.gen_range(7.0..8.0)), unit: 2.to_string() });
-        metrics.push(MetricData { name:5.to_string(), value: MetricValue::Float(rng.gen_range(0.1..0.2)), unit: 2.to_string() });
-        metrics.push(MetricData { name:6.to_string(), value: MetricValue::Float(rng.gen_range(25.0..100.0)), unit: 2.to_string() });
-        metrics.push(MetricData { name:0.to_string(), value: MetricValue::Float(rng.gen_range(75.1..90.2)), unit: 2.to_string() });
-        metrics.push(MetricData { name: 8.to_string(), value: MetricValue::Int(1), unit: 4.to_string() });
+        metrics.push(MetricData {
+            name: 3.to_string(),
+            value: MetricValue::Float(rng.gen_range(1.0..10.0)),
+            unit: 2.to_string(),
+        });
+        metrics.push(MetricData {
+            name: 7.to_string(),
+            value: MetricValue::Int(1),
+            unit: 4.to_string(),
+        });
+        metrics.push(MetricData {
+            name: 1.to_string(),
+            value: MetricValue::Float(rng.gen_range(16.0..23.0)),
+            unit: 2.to_string(),
+        });
+        metrics.push(MetricData {
+            name: 4.to_string(),
+            value: MetricValue::Float(rng.gen_range(7.0..8.0)),
+            unit: 2.to_string(),
+        });
+        metrics.push(MetricData {
+            name: 5.to_string(),
+            value: MetricValue::Float(rng.gen_range(0.1..0.2)),
+            unit: 2.to_string(),
+        });
+        metrics.push(MetricData {
+            name: 6.to_string(),
+            value: MetricValue::Float(rng.gen_range(25.0..100.0)),
+            unit: 2.to_string(),
+        });
+        metrics.push(MetricData {
+            name: 0.to_string(),
+            value: MetricValue::Float(rng.gen_range(75.1..90.2)),
+            unit: 2.to_string(),
+        });
+        metrics.push(MetricData {
+            name: 8.to_string(),
+            value: MetricValue::Int(1),
+            unit: 4.to_string(),
+        });
         metrics
-        
-    } 
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{MetricData,Metrics};
+    use super::{MetricData, Metrics};
     use std::time::Instant;
     #[test]
-    fn test_metric_data(){
+    fn test_metric_data() {
         let start = Instant::now();
         let metrics = Metrics::new();
+        assert!(metrics.gpu <= 16 && metrics.gpu >= 13);
         let metric_data = MetricData::metric_to_metric_data(metrics);
+        for i in 1..14 {
+            assert_eq!(
+                100 + (i - 1),
+                str::parse::<usize>(metric_data[i].name.as_str()).unwrap()
+            );
+        }
         let serialized = serde_json::to_string(&metric_data).unwrap();
         println!("{serialized}");
-        println!("Time : {:?}",start.elapsed());
-
+        println!("Time : {:?}", start.elapsed());
     }
 }

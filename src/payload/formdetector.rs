@@ -1,4 +1,9 @@
 use tl::{Node, Parser};
+
+const FORM_ELEMENT_TYPES: [&str; 10] = [
+    "input", "select", "textarea", "button", "fieldset", "legend", "datalist", "output", "option",
+    "optgroup",
+];
 pub fn get_form_data(html_body: &str) -> (usize, usize) {
     // let mut forms: Vec<tl::Node> = vec![];
     let dom = tl::parse(html_body, tl::ParserOptions::default()).unwrap();
@@ -11,6 +16,7 @@ pub fn get_form_data(html_body: &str) -> (usize, usize) {
             .map(|node| get_form_elements_count(&node, parser))
             .sum();
         let count = node_iter.by_ref().count();
+        println!("Elements Count : {count}");
         return (form_elements, count);
     }
     (0, 0)
@@ -25,7 +31,10 @@ pub fn get_form_elements_count(form_node: &Node, parser: &Parser) -> usize {
         .iter()
         .filter(|child| {
             if let Some(tag) = (**child).as_tag() {
-                return tag.name() == "input".as_bytes() || tag.name() == "button".as_bytes();
+                if FORM_ELEMENT_TYPES.contains(&tag.name().as_utf8_str().as_ref()) {
+                    println!("{:?}", tag.raw().as_utf8_str());
+                    return true;
+                }
             }
             return false;
         })
@@ -86,18 +95,21 @@ mod tests {
     async fn test_webpage() {
         let client = rquest::Client::builder()
             .impersonate(Impersonate::Chrome129)
-            .build();
+            .brotli(true)
+            .build()
+            .expect("Error");
         let html = client
-            .expect("Error")
             .get("https://huggingface.co/login")
             .send()
             .await
             .expect("error");
         let status = html.status().as_u16();
+        println!("{:?}", html.headers());
         if status != 200 {
             panic!("Status code was not 200. Status: {}", status);
         }
         let html_body = html.text().await.expect("error");
+        // println!("{html_body:?}");
         let (num_form_elements, num_forms) = get_form_data(&html_body);
         assert_eq!(num_forms, 1);
         assert_eq!(num_form_elements, 3);
