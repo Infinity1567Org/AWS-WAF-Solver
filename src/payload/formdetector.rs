@@ -16,7 +16,6 @@ pub fn get_form_data(html_body: &str) -> (usize, usize) {
             .map(|node| get_form_elements_count(&node, parser))
             .sum();
         let count = node_iter.by_ref().count();
-        println!("Elements Count : {count}");
         return (form_elements, count);
     }
     (0, 0)
@@ -31,10 +30,7 @@ pub fn get_form_elements_count(form_node: &Node, parser: &Parser) -> usize {
         .iter()
         .filter(|child| {
             if let Some(tag) = (**child).as_tag() {
-                if FORM_ELEMENT_TYPES.contains(&tag.name().as_utf8_str().as_ref()) {
-                    println!("{:?}", tag.raw().as_utf8_str());
-                    return true;
-                }
+                return FORM_ELEMENT_TYPES.contains(&tag.name().as_utf8_str().as_ref());
             }
             return false;
         })
@@ -80,15 +76,6 @@ mod tests {
         println!("Time : {:?}", start.elapsed());
         assert_eq!(count, 2);
         assert_eq!(forms, 4);
-        // let dom = tl::parse(html_body, tl::ParserOptions::default()).unwrap();
-        // let parser = dom.parser();
-        // let form_children = forms[0].children().unwrap();
-        // for f in form_children.top().iter() {
-        //     if let Some(tag) = f.get(parser).unwrap().as_tag() {
-        //         println!("{:#?}",tag);
-        //     }
-
-        // }
     }
 
     #[tokio::test]

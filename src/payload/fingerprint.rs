@@ -1,3 +1,4 @@
+use crate::payload::formdetector::get_form_data;
 use crate::payload::graphics::{Canvas, Gpu};
 use crate::payload::metrics::Metrics;
 use rand::seq::SliceRandom; // For random selection
@@ -144,9 +145,9 @@ pub struct Fingerprint {
     #[serde(rename = "formDetected")]
     form_detected: bool,
     #[serde(rename = "numForms")]
-    num_forms: u32,
+    num_forms: usize,
     #[serde(rename = "numFormElements")]
-    num_form_elements: u32,
+    num_form_elements: usize,
     be: Be,
     end: u64,
     errors: Vec<String>,
@@ -155,7 +156,12 @@ pub struct Fingerprint {
 }
 
 impl Fingerprint {
-    pub fn new(referrer: String, user_agent: String, location: String) -> Fingerprint {
+    pub fn new(
+        referrer: String,
+        user_agent: String,
+        location: String,
+        html_body: &str,
+    ) -> Fingerprint {
         let math = Math::new();
         let plugins: Vec<Plugin> = vec![
             Plugin {
@@ -188,6 +194,7 @@ impl Fingerprint {
         let screen_info = resolution.construct_screeninfo_string();
         let duped_plugins = Plugin::generate_plugin_string(&plugins) + "||" + &screen_info;
         let canvas = Canvas::new();
+        let (num_form_elements, num_forms) = get_form_data(html_body);
         let gpu = Gpu::new();
         let start = (SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -211,9 +218,9 @@ impl Fingerprint {
             automation,
             crypto,
             canvas,
-            form_detected: false,
-            num_forms: 0,
-            num_form_elements: 0,
+            form_detected: num_forms > 0,
+            num_forms,
+            num_form_elements,
             be,
             end: (start + 1),
             errors: vec![],
@@ -353,6 +360,33 @@ mod tests {
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:131.0) Gecko/20100101 Firefox/131.0",
             ),
             String::from("https://huggingface.co/login"),
+            r#"<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Forms</title>
+</head>
+<body>
+    <h1>Form Test</h1>
+
+    <form id="form1">
+        <label for="input1">Input 1:</label>
+        <input type="text" id="input1" name="input1">
+        <button type="submit">Submit Form 1</button>
+    </form>
+
+    <form id="form2">
+        <label for="input2">Input 2:</label>
+        <input type="text" id="input2" name="input2">
+        <button type="submit">Submit Form 2</button>
+    </form>
+
+    <div>
+        <p>This is a sample HTML document with two form elements for testing.</p>
+    </div>
+</body>
+</html>
+"#,
         );
         let serialized = serde_json::to_string(&result).unwrap();
         println!("Time : {:?}", start.elapsed());

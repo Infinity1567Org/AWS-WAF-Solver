@@ -12,3 +12,9 @@ struct_iterable = "0.1.1"
 tl = "0.7.8"
 rquest = {version = "0.23.3" , features = ["brotli","cookies"]}
 tokio = {version = "1.40.0" , features = ["full"]}
+aes-gcm = "0.10.3"
+hex = "0.4.3"
+crc32fast = "1.4.2"
+base64 = "0.22.1"
+scrypt = {version = "0.2" , default-features = false }
+sha2 = "0.10.8"
