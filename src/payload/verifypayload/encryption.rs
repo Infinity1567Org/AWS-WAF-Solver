@@ -7,12 +7,12 @@ use crc32fast::hash;
 pub struct Encryptor {}
 
 impl Encryptor {
-    pub fn calculate_checksum(json_body: &str) -> u32 {
-        hash(json_body.as_bytes())
+    pub fn calculate_checksum(json_body: &str) -> String {
+        format!("{:08X}", hash(json_body.as_bytes()))
     }
     pub fn construct_payload_string(json_body: &str) -> String {
         let checksum = Self::calculate_checksum(json_body);
-        let final_str = checksum.to_string() + "#" + json_body;
+        let final_str = checksum + "#" + json_body;
         final_str
     }
 
@@ -35,7 +35,7 @@ impl Encryptor {
 #[cfg(test)]
 mod tests {
     use super::Encryptor;
-    use crate::payload::fingerprint::Fingerprint;
+    use crate::payload::verifypayload::fingerprint::Fingerprint;
     use std::time::Instant;
 
     #[test]

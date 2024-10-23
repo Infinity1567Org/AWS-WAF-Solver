@@ -1,8 +1,8 @@
-use crate::payload::formdetector::get_form_data;
-use crate::payload::graphics::{Canvas, Gpu};
-use crate::payload::metrics::Metrics;
-use rand::seq::SliceRandom; // For random selection
-use rand::thread_rng;
+use super::formdetector::get_form_data;
+use super::graphics::{Canvas, Gpu};
+use super::metrics::Metrics;
+// use rand::seq::SliceRandom; // For random selection
+// use rand::thread_rng;
 use serde::Serialize;
 use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
@@ -14,18 +14,11 @@ struct Resolution(i32, i32);
 
 impl Resolution {
     fn new() -> Resolution {
-        let resolutions: [Resolution; 4] = [
-            Resolution(1366, 768),  // HD
-            Resolution(1920, 1080), // Full HD
-            Resolution(1600, 900),  // HD+
-            Resolution(1440, 900),  // 16:10
-        ];
-        let mut rng = thread_rng();
-        resolutions.choose(&mut rng).unwrap().clone()
+        Resolution(1512, 982)
     }
 
     fn construct_screeninfo_string(&self) -> String {
-        format!("{}-{}-{}-24-*-*-*", self.0, self.1, self.1 - 40)
+        format!("{}-{}-{}-30-*-*-*", self.0, self.1, self.1 - 125)
     }
 }
 
@@ -120,7 +113,7 @@ impl JsCapabilities {
 
 #[derive(Debug, Serialize)]
 pub struct Fingerprint {
-    metrics: Metrics,
+    pub metrics: Metrics,
     start: u64,
     #[serde(rename = "flashVersion")]
     flash_version: Option<String>,
@@ -140,6 +133,7 @@ pub struct Fingerprint {
     dnt: Option<u8>,
     math: Math,
     automation: Automation,
+    stealth: Stealth,
     crypto: Crypto,
     canvas: Canvas,
     #[serde(rename = "formDetected")]
@@ -216,6 +210,13 @@ impl Fingerprint {
             dnt: None,
             math,
             automation,
+            stealth: Stealth {
+                t1: 0,
+                t2: 0,
+                i: 1,
+                mte: 0,
+                mtd: false,
+            },
             crypto,
             canvas,
             form_detected: num_forms > 0,
@@ -278,7 +279,14 @@ impl WebDriver {
         }
     }
 }
-
+#[derive(Serialize, Debug)]
+struct Stealth {
+    t1: usize,
+    t2: usize,
+    i: usize,
+    mte: usize,
+    mtd: bool,
+}
 #[derive(Debug, Serialize)]
 struct Phantom {
     properties: Properties,

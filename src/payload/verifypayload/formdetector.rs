@@ -1,9 +1,6 @@
 use tl::{Node, Parser};
 
-const FORM_ELEMENT_TYPES: [&str; 10] = [
-    "input", "select", "textarea", "button", "fieldset", "legend", "datalist", "output", "option",
-    "optgroup",
-];
+const FORM_ELEMENT_TYPES: [&str; 4] = ["input", "fieldset", "button", "textarea"];
 pub fn get_form_data(html_body: &str) -> (usize, usize) {
     // let mut forms: Vec<tl::Node> = vec![];
     let dom = tl::parse(html_body, tl::ParserOptions::default()).unwrap();
@@ -30,8 +27,15 @@ pub fn get_form_elements_count(form_node: &Node, parser: &Parser) -> usize {
         .iter()
         .filter(|child| {
             if let Some(tag) = (**child).as_tag() {
-                return FORM_ELEMENT_TYPES.contains(&tag.name().as_utf8_str().as_ref());
+                // println!("{}", &tag.raw().as_utf8_str());
+
+                if FORM_ELEMENT_TYPES.contains(&tag.name().as_utf8_str().as_ref()) {
+                    println!("{}", &tag.name().as_utf8_str().as_ref());
+                    return true;
+                }
+                return false;
             }
+
             return false;
         })
         .count()
@@ -39,7 +43,7 @@ pub fn get_form_elements_count(form_node: &Node, parser: &Parser) -> usize {
 #[cfg(test)]
 mod tests {
     use super::get_form_data;
-    use rquest::tls::Impersonate;
+    use rquest::{header, tls::Impersonate};
     use std::time::Instant;
     #[test]
     fn test_local_html() {
@@ -83,23 +87,25 @@ mod tests {
         let client = rquest::Client::builder()
             .impersonate(Impersonate::Chrome129)
             .brotli(true)
+            .cookie_store(true)
             .build()
             .expect("Error");
         let html = client
-            .get("https://huggingface.co/login")
+            .get("https://www.booking.com/searchresults.html?ss=newark+&ssne=Las+Vegas&ssne_untouched=Las+Vegas&efdco=1&label=gen173nr-1FCAEoggI46AdIM1gEaKQCiAEBmAExuAEXyAEM2AEB6AEB-AECiAIBqAIDuAKeoNq4BsACAdICJDE5MjQzYmY4LTNhZjgtNDYzMi05NDMwLWQ0ZWQwMDI4MTJlY9gCBeACAQ&aid=304142&lang=en-us&sb=1&src_elem=sb&src=searchresults&group_adults=2&no_rooms=1&group_children=0")
+            .header(header::REFERER, "https://www.booking.com")
             .send()
             .await
             .expect("error");
         let status = html.status().as_u16();
-        println!("{:?}", html.headers());
+        // println!("{:?}", html.headers());
         if status != 200 {
             panic!("Status code was not 200. Status: {}", status);
         }
         let html_body = html.text().await.expect("error");
         // println!("{html_body:?}");
         let (num_form_elements, num_forms) = get_form_data(&html_body);
-        assert_eq!(num_forms, 1);
-        assert_eq!(num_form_elements, 3);
+        assert_eq!(num_forms, 2);
+        assert_eq!(num_form_elements, 23);
 
         // assert_eq!()
     }

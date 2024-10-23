@@ -116,6 +116,7 @@ dependencies = [
  "crc32fast",
  "hex",
  "rand",
+ "regex",
  "rquest",
  "scrypt",
  "serde",
@@ -124,6 +125,7 @@ dependencies = [
  "struct_iterable",
  "tl",
  "tokio",
+ "url",
  "uuid",
 ]
 
@@ -1153,6 +1155,7 @@ dependencies = [
  "rh2",
  "rhyper",
  "serde",
+ "serde_json",
  "serde_urlencoded",
  "system-configuration",
  "tokio",
