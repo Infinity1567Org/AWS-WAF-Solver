@@ -91,8 +91,8 @@ mod tests {
             .build()
             .expect("Error");
         let html = client
-            .get("https://www.booking.com/searchresults.html?ss=newark+&ssne=Las+Vegas&ssne_untouched=Las+Vegas&efdco=1&label=gen173nr-1FCAEoggI46AdIM1gEaKQCiAEBmAExuAEXyAEM2AEB6AEB-AECiAIBqAIDuAKeoNq4BsACAdICJDE5MjQzYmY4LTNhZjgtNDYzMi05NDMwLWQ0ZWQwMDI4MTJlY9gCBeACAQ&aid=304142&lang=en-us&sb=1&src_elem=sb&src=searchresults&group_adults=2&no_rooms=1&group_children=0")
-            .header(header::REFERER, "https://www.booking.com")
+            .get("https://huggingface.co/login")
+            .header(header::REFERER, "https://huggingface.co")
             .send()
             .await
             .expect("error");
@@ -104,8 +104,8 @@ mod tests {
         let html_body = html.text().await.expect("error");
         // println!("{html_body:?}");
         let (num_form_elements, num_forms) = get_form_data(&html_body);
-        assert_eq!(num_forms, 2);
-        assert_eq!(num_form_elements, 23);
+        assert_eq!(num_forms, 1);
+        assert_eq!(num_form_elements, 3);
 
         // assert_eq!()
     }
